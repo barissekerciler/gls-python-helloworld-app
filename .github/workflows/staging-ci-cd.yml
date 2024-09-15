@@ -14,5 +14,5 @@ jobs:
   staging-build:
     uses: ./.github/workflows/docker-build-template.yml
     with:
-      tag_prefix: 'staging-'
+      tag_prefix: ''
       branch: 'staging'
