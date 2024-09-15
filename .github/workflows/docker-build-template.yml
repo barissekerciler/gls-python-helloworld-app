@@ -39,7 +39,8 @@ jobs:
       id: get_latest_tag
       run: |
         if [[ "${{ inputs.branch }}" == "master" ]]; then
-          echo "LATEST_TAG=$(git describe --tags --abbrev=0 --match 'v*' || echo 'v1.0.0')" >> $GITHUB_OUTPUT
+          LATEST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo 'v1.0.0')
+          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_OUTPUT
         else
           echo "LATEST_TAG=" >> $GITHUB_OUTPUT
         fi
@@ -49,8 +50,9 @@ jobs:
       run: |
         if [[ "${{ inputs.branch }}" == "master" ]]; then
           # Production versioning (v1.0.x)
-          IFS='.' read -r -a version_parts <<< "${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
-          major=${version_parts[0]#v}
+          LATEST_TAG="${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
+          IFS='.' read -r -a version_parts <<< "${LATEST_TAG#v}"
+          major=${version_parts[0]}
           minor=${version_parts[1]}
           patch=${version_parts[2]}
           patch=$((patch + 1))
