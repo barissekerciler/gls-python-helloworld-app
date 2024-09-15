@@ -8,7 +8,7 @@ on:
 
 jobs:
   staging-build:
-    uses: ./.github/workflows/templates/docker-build-template.yml
+    uses: ./.github/workflows/docker-build-template.yml
     with:
       tag_prefix: 'staging-'
       branch: 'staging'

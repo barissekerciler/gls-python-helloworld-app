@@ -8,7 +8,7 @@ on:
 
 jobs:
   production-build:
-    uses: ./.github/workflows/templates/docker-build-template.yml
+    uses: ./.github/workflows/docker-build-template.yml
     with:
       tag_prefix: 'v'
       branch: 'master'
