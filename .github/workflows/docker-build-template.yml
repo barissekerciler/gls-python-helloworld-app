@@ -37,14 +37,33 @@ jobs:
 
     - name: Get the latest tag
       id: get_latest_tag
-      run: echo "LATEST_TAG=$(git describe --tags --abbrev=0 --match '${{ inputs.tag_prefix }}*' || echo '${{ inputs.tag_prefix }}0.0.0')" >> $GITHUB_OUTPUT
+      run: echo "LATEST_TAG=$(git describe --tags --abbrev=0 --match '${{ inputs.tag_prefix }}*' || echo '${{ inputs.tag_prefix }}1.0.0')" >> $GITHUB_OUTPUT
 
     - name: Increment version
       id: increment_version
       run: |
         IFS='.' read -r -a version_parts <<< "${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
-        version_parts[2]=$((${version_parts[2]##${{ inputs.tag_prefix }}}+1)) # Increment patch version
-        NEW_VERSION="${{ inputs.tag_prefix }}${version_parts[1]}.${version_parts[2]}.${version_parts[3]}"
+        major=${version_parts[0]#${{ inputs.tag_prefix }}}
+        minor=${version_parts[1]}
+        patch=${version_parts[2]}
+        
+        # Increment patch version
+        patch=$((patch + 1))
+        
+        # If patch reaches 100, increment minor and reset patch
+        if [ $patch -ge 100 ]; then
+          minor=$((minor + 1))
+          patch=0
+        fi
+        
+        # If minor reaches 100, increment major and reset minor and patch
+        if [ $minor -ge 100 ]; then
+          major=$((major + 1))
+          minor=0
+          patch=0
+        fi
+        
+        NEW_VERSION="${{ inputs.tag_prefix }}${major}.${minor}.${patch}"
         echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_OUTPUT
         echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
 
