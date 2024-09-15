@@ -3,6 +3,8 @@ name: Production CI
 on:
   push:
     branches: [master]
+    tags:
+      - 'v*'  # This will trigger the workflow for any tag starting with 'v'
   pull_request:
     branches: [master]
 
@@ -15,4 +17,4 @@ jobs:
     uses: ./.github/workflows/docker-build-template.yml
     with:
       tag_prefix: ""
-      branch: "master"
+      branch: ${{ github.ref_name }}
