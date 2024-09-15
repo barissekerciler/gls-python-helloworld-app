@@ -44,17 +44,15 @@ jobs:
     - name: Set version
       id: set_version
       run: |
-        if [[ "${{ inputs.branch }}" == "master" ]]; then
-          # Use the latest git tag for master, or fallback to a default version
-          LATEST_TAG="${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
-          if [[ -z "$LATEST_TAG" ]]; then
-            echo "No git tag found for master branch. Using default version."
-            NEW_VERSION="v0.0.0"
-          else
-            NEW_VERSION="${LATEST_TAG}"
-          fi
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          # If it's a tag, use the tag name directly
+          NEW_VERSION="${{ github.ref_name }}"
+        elif [[ "${{ inputs.branch }}" == "master" ]]; then
+          # For master branch without a tag, use a default version
+          echo "No tag found for master branch. Using default version."
+          NEW_VERSION="latest"
         else
-          # Staging versioning (branch-sha-timestamp)
+          # For other branches (e.g., staging), keep the current versioning
           GIT_BRANCH="${{ github.ref_name }}"
           GIT_SHA="${{ github.sha }}"
           TIMESTAMP=$(date +%s)
