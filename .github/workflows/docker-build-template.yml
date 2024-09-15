@@ -39,26 +39,25 @@ jobs:
       id: get_latest_tag
       run: |
         if [[ "${{ inputs.branch }}" == "master" ]]; then
-          LATEST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo 'v1.0.0')
+          LATEST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo '')
           echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_OUTPUT
         else
           echo "LATEST_TAG=" >> $GITHUB_OUTPUT
         fi
 
-    - name: Increment version
-      id: increment_version
+    - name: Set version
+      id: set_version
       run: |
         if [[ "${{ inputs.branch }}" == "master" ]]; then
-          # Production versioning (v1.0.x)
+          # Use the latest git tag for master
           LATEST_TAG="${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
-          IFS='.' read -r -a version_parts <<< "${LATEST_TAG#v}"
-          major=${version_parts[0]}
-          minor=${version_parts[1]}
-          patch=${version_parts[2]}
-          patch=$((patch + 1))
-          NEW_VERSION="v${major}.${minor}.${patch}"
+          if [[ -z "$LATEST_TAG" ]]; then
+            echo "No git tag found for master branch. Please create a tag manually."
+            exit 1
+          fi
+          NEW_VERSION="${LATEST_TAG}"
         else
-          # Staging versioning (branch-sha-timestamp)
+          # Staging versioning (branch-sha-
           GIT_BRANCH="${{ github.ref_name }}"
           GIT_SHA="${{ github.sha }}"
           TIMESTAMP=$(date +%s)
@@ -72,7 +71,7 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        tags: ${{ steps.increment_version.outputs.NEW_VERSION }}
+        tags: ${{ steps.set_version.outputs.NEW_VERSION }}
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
