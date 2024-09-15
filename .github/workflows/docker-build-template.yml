@@ -49,7 +49,7 @@ jobs:
           LATEST_TAG="${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
           if [[ -z "$LATEST_TAG" ]]; then
             echo "No git tag found for master branch. Using default version."
-            NEW_VERSION="v0.0.0-${GITHUB_SHA:0:7}"
+            NEW_VERSION="v0.0.0"
           else
             NEW_VERSION="${LATEST_TAG}"
           fi
