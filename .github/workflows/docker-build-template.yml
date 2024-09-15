@@ -38,26 +38,23 @@ jobs:
     - name: Get the latest tag
       id: get_latest_tag
       run: |
-        if [[ "${{ inputs.branch }}" == "master" ]]; then
-          LATEST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo '')
-          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_OUTPUT
-        else
-          echo "LATEST_TAG=" >> $GITHUB_OUTPUT
-        fi
+        LATEST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo '')
+        echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_OUTPUT
 
     - name: Set version
       id: set_version
       run: |
         if [[ "${{ inputs.branch }}" == "master" ]]; then
-          # Use the latest git tag for master
+          # Use the latest git tag for master, or fallback to a default version
           LATEST_TAG="${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
           if [[ -z "$LATEST_TAG" ]]; then
-            echo "No git tag found for master branch. Please create a tag manually."
-            exit 1
+            echo "No git tag found for master branch. Using default version."
+            NEW_VERSION="v0.0.0-${GITHUB_SHA:0:7}"
+          else
+            NEW_VERSION="${LATEST_TAG}"
           fi
-          NEW_VERSION="${LATEST_TAG}"
         else
-          # Staging versioning (branch-sha-
+          # Staging versioning (branch-sha-timestamp)
           GIT_BRANCH="${{ github.ref_name }}"
           GIT_SHA="${{ github.sha }}"
           TIMESTAMP=$(date +%s)
