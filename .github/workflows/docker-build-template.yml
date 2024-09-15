@@ -37,28 +37,30 @@ jobs:
 
     - name: Get the latest tag
       id: get_latest_tag
-      run: echo "LATEST_TAG=$(git describe --tags --abbrev=0 --match '${{ inputs.tag_prefix }}*' || echo '1.0.0')" >> $GITHUB_OUTPUT
+      run: |
+        if [[ "${{ inputs.branch }}" == "master" ]]; then
+          echo "LATEST_TAG=$(git describe --tags --abbrev=0 --match 'v*' || echo 'v1.0.0')" >> $GITHUB_OUTPUT
+        else
+          echo "LATEST_TAG=" >> $GITHUB_OUTPUT
+        fi
 
     - name: Increment version
       id: increment_version
       run: |
-        IFS='.' read -r -a version_parts <<< "${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
         if [[ "${{ inputs.branch }}" == "master" ]]; then
-          # Production versioning (1.0.x)
-          major=${version_parts[0]}
+          # Production versioning (v1.0.x)
+          IFS='.' read -r -a version_parts <<< "${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
+          major=${version_parts[0]#v}
           minor=${version_parts[1]}
           patch=${version_parts[2]}
           patch=$((patch + 1))
-          NEW_VERSION="${major}.${minor}.${patch}"
+          NEW_VERSION="v${major}.${minor}.${patch}"
         else
-          # Staging versioning (1.0.0-rc.1)
-          major=${version_parts[0]}
-          minor=${version_parts[1]}
-          patch=${version_parts[2]}
-          rc_version=${version_parts[3]#rc.}
-          rc_version=${rc_version:-0}
-          rc_version=$((rc_version + 1))
-          NEW_VERSION="${major}.${minor}.${patch}-rc.${rc_version}"
+          # Staging versioning (branch-sha-timestamp)
+          GIT_BRANCH="${{ github.ref_name }}"
+          GIT_SHA="${{ github.sha }}"
+          TIMESTAMP=$(date +%s)
+          NEW_VERSION="${GIT_BRANCH}-${GIT_SHA:0:7}-${TIMESTAMP}"
         fi
         echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_OUTPUT
         echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
