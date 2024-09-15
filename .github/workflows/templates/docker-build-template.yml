@@ -1,0 +1,67 @@
+name: Docker Build Template
+
+on:
+  workflow_call:
+    inputs:
+      tag_prefix:
+        required: true
+        type: string
+      branch:
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v3 
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Get the latest tag
+      id: get_latest_tag
+      run: echo "LATEST_TAG=$(git describe --tags --abbrev=0 --match '${{ inputs.tag_prefix }}*' || echo '${{ inputs.tag_prefix }}0.0.0')" >> $GITHUB_OUTPUT
+
+    - name: Increment version
+      id: increment_version
+      run: |
+        IFS='.' read -r -a version_parts <<< "${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
+        version_parts[2]=$((${version_parts[2]##${{ inputs.tag_prefix }}}+1)) # Increment patch version
+        NEW_VERSION="${{ inputs.tag_prefix }}${version_parts[1]}.${version_parts[2]}.${version_parts[3]}"
+        echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_OUTPUT
+        echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: ${{ steps.increment_version.outputs.NEW_VERSION }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=
+        platforms: linux/amd64,linux/arm64

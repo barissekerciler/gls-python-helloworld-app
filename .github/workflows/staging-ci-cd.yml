@@ -1,0 +1,14 @@
+name: Staging CI
+
+on:
+  push:
+    branches: [ staging ]
+  pull_request:
+    branches: [ staging ]
+
+jobs:
+  staging-build:
+    uses: ./.github/workflows/templates/docker-build-template.yml
+    with:
+      tag_prefix: 'staging-'
+      branch: 'staging'
