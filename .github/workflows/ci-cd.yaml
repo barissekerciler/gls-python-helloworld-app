@@ -3,7 +3,7 @@ name: Production CI
 on:
   push:
     tags:
-      - "v*" # This will trigger the workflow for any tag starting with 'v'
+      - "v*"
 permissions:
   contents: read
   packages: write
