@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   production-build:
-    uses: ./.github/workflows/docker-build-template.yml
+    uses: ./.github/workflows/docker-build-template.yaml
     with:
       tag_prefix: ""
       branch: ${{ github.ref_name }}
