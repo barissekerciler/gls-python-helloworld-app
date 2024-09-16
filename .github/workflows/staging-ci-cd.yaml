@@ -2,7 +2,8 @@ name: Staging CI
 
 on:
   push:
-    branches: [ staging ]
+    branches:
+      - staging
 
 permissions:
   contents: read
@@ -12,5 +13,5 @@ jobs:
   staging-build:
     uses: ./.github/workflows/docker-build-template.yaml
     with:
-      tag_prefix: ''
-      branch: 'staging'
+      tag_prefix: ""
+      branch: "staging"
