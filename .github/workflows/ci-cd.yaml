@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
     tags:
-      - 'v*'  # This will trigger the workflow for any tag starting with 'v'
+      - "v*" # This will trigger the workflow for any tag starting with 'v'
   pull_request:
     branches: [master]
 
